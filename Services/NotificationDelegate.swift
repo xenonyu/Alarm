@@ -6,7 +6,9 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
 
     // MARK: - Foreground delivery
 
-    /// When alarm fires while app is open: start in-app alarm immediately.
+    /// When an alarm notification fires while the app is open, show the in-app alarm UI.
+    /// On iOS 26+ with AlarmKit authorized, UNNotifications are only used for commute
+    /// reminders (no ringtone key), so this branch won't be reached for regular alarms.
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
@@ -14,9 +16,10 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     ) {
         let info = notification.request.content.userInfo
         if let ringtone = info["ringtone"] as? String {
-            // Alarm notification (iOS <26 only): show banner, start looping in-app audio.
-            // On iOS 26+ AlarmKit manages the alarm UI; UNNotification is only used for commute reminders.
-            if #unavailable(iOS 26) {
+            // Use in-app alarm when AlarmKit is not authorized (or not available)
+            let useInApp: Bool
+            if #available(iOS 26, *) { useInApp = !AlarmKitService.isAuthorized } else { useInApp = true }
+            if useInApp {
                 let fireTime = (info["fireTime"] as? Double).map(Date.init(timeIntervalSince1970:)) ?? Date()
                 let title    = notification.request.content.title
                 Task { @MainActor in
@@ -40,7 +43,7 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
         let ringtone = info["ringtone"] as? String ?? AppSettings.shared.ringtone
 
         if response.actionIdentifier == NotificationService.snoozeActionID {
-            // Snooze: reschedule a new notification, no alarm UI
+            // Snooze: reschedule a new notification
             let snoozeMin = AppSettings.shared.snoozeMinutes
             let fireDate  = Date().addingTimeInterval(Double(snoozeMin * 60))
 
@@ -55,8 +58,10 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
             center.add(UNNotificationRequest(identifier: "snooze-\(UUID().uuidString)", content: content, trigger: trigger))
 
         } else if info["ringtone"] != nil {
-            // Default tap on an alarm notification (iOS <26 only): show in-app alarm UI.
-            if #unavailable(iOS 26) {
+            // Default tap: show in-app alarm UI when AlarmKit is not handling it
+            let showInApp: Bool
+            if #available(iOS 26, *) { showInApp = !AlarmKitService.isAuthorized } else { showInApp = true }
+            if showInApp {
                 let fireTime = (info["fireTime"] as? Double).map(Date.init(timeIntervalSince1970:)) ?? Date()
                 let title    = response.notification.request.content.title
                 Task { @MainActor in

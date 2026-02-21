@@ -16,6 +16,15 @@ final class AlarmKitService {
         try? await AlarmManager.shared.requestAuthorization()
     }
 
+    /// Returns true when AlarmKit is available and the user has granted permission.
+    /// Safe to call from any file without importing AlarmKit.
+    static var isAuthorized: Bool {
+        if #available(iOS 26, *) {
+            return AlarmManager.shared.authorizationState == .authorized
+        }
+        return false
+    }
+
     // MARK: - Schedule
 
     /// Cancels any existing AlarmKit alarms for this Alarm, then schedules new ones.

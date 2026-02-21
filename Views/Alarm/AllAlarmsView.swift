@@ -20,52 +20,82 @@ struct AllAlarmsView: View {
         }
     }
 
-    /// Earliest next fire date among all enabled alarms.
-    private var nextAlarmDate: Date? {
+    /// Earliest next fire date among all enabled alarms that is still in the future.
+    private func nextAlarmDate(after now: Date) -> Date? {
         alarms
             .filter(\.isEnabled)
-            .compactMap { $0.nextFireDates(from: Date(), count: 1, holidays: store.holidayService.allHolidays).first }
+            .compactMap { $0.nextFireDates(from: now, count: 1, holidays: store.holidayService.allHolidays).first }
+            .filter { $0 > now }
             .min()
     }
 
     var body: some View {
         List {
-            // ── Next alarm countdown ──────────────────────────────────────────────
-            if let next = nextAlarmDate {
+            // ── AlarmKit authorization warning ───────────────────────────────────
+            if #available(iOS 26, *), !AlarmKitService.isAuthorized {
                 Section {
                     HStack(spacing: 12) {
-                        Image(systemName: "alarm.fill")
-                            .font(.title2)
-                            .foregroundStyle(.tint)
-                            .frame(width: 32)
-
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text("Next Alarm")
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Alarm Permission Required")
+                                .font(.subheadline.weight(.semibold))
+                            Text("Enable Alarms in Settings so alarms can ring.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Text(next, style: .time)
-                                .font(.system(size: 22, weight: .light, design: .rounded))
-                                .monospacedDigit()
-                                .foregroundStyle(.tint)
                         }
-
                         Spacer()
-
-                        VStack(alignment: .trailing, spacing: 1) {
-                            Text("in")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(next, style: .relative)
-                                .font(.subheadline.weight(.medium))
-                                .fontDesign(.rounded)
-                                .foregroundStyle(.primary)
-                                .multilineTextAlignment(.trailing)
+                        Link(destination: URL(string: UIApplication.openSettingsURLString)!) {
+                            Text("Settings")
+                                .font(.caption.weight(.semibold))
                         }
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 4)
                 }
-                .listRowBackground(Color.accentColor.opacity(0.08))
+                .listRowBackground(Color.orange.opacity(0.10))
                 .listRowSeparator(.hidden)
+            }
+
+            // ── Next alarm countdown ──────────────────────────────────────────────
+            // TimelineView re-renders every minute so stale past dates are dropped.
+            TimelineView(.everyMinute) { context in
+                if let next = nextAlarmDate(after: context.date) {
+                    Section {
+                        HStack(spacing: 12) {
+                            Image(systemName: "alarm.fill")
+                                .font(.title2)
+                                .foregroundStyle(.tint)
+                                .frame(width: 32)
+
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("Next Alarm")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text(next, style: .time)
+                                    .font(.system(size: 22, weight: .light, design: .rounded))
+                                    .monospacedDigit()
+                                    .foregroundStyle(.tint)
+                            }
+
+                            Spacer()
+
+                            VStack(alignment: .trailing, spacing: 1) {
+                                Text("in")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text(next, style: .relative)
+                                    .font(.subheadline.weight(.medium))
+                                    .fontDesign(.rounded)
+                                    .foregroundStyle(.primary)
+                                    .multilineTextAlignment(.trailing)
+                            }
+                        }
+                        .padding(.vertical, 8)
+                    }
+                    .listRowBackground(Color.accentColor.opacity(0.08))
+                    .listRowSeparator(.hidden)
+                }
             }
 
             if alarms.isEmpty {

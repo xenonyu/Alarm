@@ -85,6 +85,19 @@ struct SettingsView: View {
 
             // ── Permissions ───────────────────────────────────────────────────────
             Section {
+                if #available(iOS 26, *) {
+                    Link(destination: URL(string: UIApplication.openSettingsURLString)!) {
+                        HStack {
+                            Label("Alarms", systemImage: "alarm")
+                            if !AlarmKitService.isAuthorized {
+                                Spacer()
+                                Text("Not Allowed")
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                            }
+                        }
+                    }
+                }
                 Link(destination: URL(string: UIApplication.openSettingsURLString)!) {
                     Label("Notifications", systemImage: "bell.badge")
                 }
@@ -94,7 +107,7 @@ struct SettingsView: View {
             } header: {
                 Label("Permissions", systemImage: "lock.shield")
             } footer: {
-                Text("Manage notification and location access in iOS Settings.")
+                Text("Manage alarm, notification and location access in iOS Settings.")
             }
 
             // ── About ────────────────────────────────────────────────────────────

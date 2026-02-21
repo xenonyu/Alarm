@@ -51,11 +51,11 @@ final class NotificationService {
             for date in dates {
                 await scheduleCommuteNotification(alarm: alarm, arrivalDate: date)
             }
-        } else if #available(iOS 26, *) {
-            // Regular alarms on iOS 26+: system-managed via AlarmKit
+        } else if #available(iOS 26, *), AlarmKitService.isAuthorized {
+            // Regular alarms on iOS 26+ with AlarmKit authorized: system-managed
             await AlarmKitService.shared.schedule(alarm, holidays: holidays)
         } else {
-            // Regular alarms on iOS <26: UNNotification + in-app AlarmAudioService
+            // iOS <26, or iOS 26+ without AlarmKit authorization: UNNotification + in-app audio
             let dates = alarm.nextFireDates(count: 20, holidays: holidays)
             for date in dates {
                 await scheduleRegularNotification(alarm: alarm, at: date)
