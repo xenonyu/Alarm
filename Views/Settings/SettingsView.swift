@@ -3,10 +3,38 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AppSettings.self) private var settings
 
+    private var currentCountryName: String {
+        Locale.current.localizedString(forRegionCode: settings.holidayCountryCode)
+            ?? settings.holidayCountryCode
+    }
+
     var body: some View {
         @Bindable var settings = settings
 
         List {
+            // ── Public Holidays ──────────────────────────────────────────────────
+            Section {
+                NavigationLink {
+                    HolidayRegionPickerView()
+                } label: {
+                    HStack(spacing: 12) {
+                        Text(settings.holidayCountryCode.flagEmoji)
+                            .font(.title2)
+                            .frame(width: 32)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Holiday Region")
+                            Text(currentCountryName)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            } header: {
+                Label("Public Holidays", systemImage: "calendar.badge.clock")
+            } footer: {
+                Text("Select a country to load its official public holidays.")
+            }
+
             // ── Snooze ───────────────────────────────────────────────────────────
             Section {
                 Picker("Duration", selection: $settings.snoozeMinutes) {
@@ -52,5 +80,17 @@ struct SettingsView: View {
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
+    }
+}
+
+// MARK: - Flag Emoji Helper
+
+extension String {
+    /// Converts a 2-letter ISO country code to its flag emoji.
+    var flagEmoji: String {
+        unicodeScalars
+            .compactMap { Unicode.Scalar(127397 + $0.value) }
+            .map { String($0) }
+            .joined()
     }
 }

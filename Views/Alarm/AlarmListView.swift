@@ -97,25 +97,19 @@ struct AlarmListView: View {
 
     // MARK: - Add Button
 
-    @ViewBuilder
     private var addButton: some View {
-        if #available(iOS 26, *) {
-            Button { showAdd = true } label: {
-                Image(systemName: "plus")
-                    .font(.title3.bold())
-                    .padding(9)
-            }
-            .glassEffect(in: .circle)
-            .accessibilityLabel("Add Alarm")
-            .accessibilityIdentifier("addAlarmButton")
-        } else {
-            Button { showAdd = true } label: {
-                Image(systemName: "plus.circle.fill")
-                    .font(.title2)
-            }
-            .accessibilityLabel("Add Alarm")
-            .accessibilityIdentifier("addAlarmButton")
+        Button {
+            showAdd = true
+        } label: {
+            Image(systemName: "plus")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 32, height: 32)
+                .background(Color.accentColor)
+                .clipShape(Circle())
         }
+        .accessibilityLabel("Add Alarm")
+        .accessibilityIdentifier("addAlarmButton")
     }
 }
 

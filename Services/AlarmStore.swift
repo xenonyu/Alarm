@@ -6,7 +6,7 @@ import Observation
 @Observable
 final class AlarmStore {
 
-    let holidayService = HolidayService()
+    let holidayService = HolidayService(countryCode: AppSettings.shared.holidayCountryCode)
     private var modelContext: ModelContext?
 
     // MARK: - Setup
@@ -16,6 +16,27 @@ final class AlarmStore {
         Task {
             let year = Calendar.current.component(.year, from: Date())
             await holidayService.ensureLoaded(for: [year, year + 1])
+        }
+    }
+
+    /// Switch the holiday country and reschedule all alarms.
+    func updateHolidayCountry(_ code: String) {
+        holidayService.updateCountry(code)
+        Task {
+            let year = Calendar.current.component(.year, from: Date())
+            await holidayService.ensureLoaded(for: [year, year + 1])
+            await rescheduleAll()
+        }
+    }
+
+    /// Reschedule notifications for every alarm (e.g. after country change).
+    func rescheduleAll() async {
+        guard let ctx = modelContext else { return }
+        let descriptor = FetchDescriptor<Alarm>()
+        let alarms = (try? ctx.fetch(descriptor)) ?? []
+        let holidays = holidayService.allHolidays
+        for alarm in alarms {
+            await NotificationService.shared.schedule(alarm, holidays: holidays)
         }
     }
 

@@ -100,37 +100,29 @@ struct AllAlarmsView: View {
         }
         .listStyle(.plain)
         .modifier(AllAlarmsSoftScrollEdge())
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                addButton
+        .overlay(alignment: .bottomTrailing) {
+            Button {
+                showAdd = true
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 56, height: 56)
+                    .background(Color.accentColor)
+                    .clipShape(Circle())
+                    .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
             }
+            .buttonStyle(.plain)
+            .padding(.trailing, 24)
+            .padding(.bottom, 24)
+            .accessibilityLabel("Add Alarm")
+            .accessibilityIdentifier("addAlarmButton")
         }
         .sheet(isPresented: $showAdd) {
             AddAlarmView()
         }
         .sheet(item: $editAlarm) { alarm in
             AddAlarmView(existingAlarm: alarm)
-        }
-    }
-
-    // MARK: - Add Button
-
-    @ViewBuilder
-    private var addButton: some View {
-        if #available(iOS 26, *) {
-            Button { showAdd = true } label: {
-                Image(systemName: "plus")
-                    .font(.title3.bold())
-                    .padding(9)
-            }
-            .glassEffect(in: .circle)
-            .accessibilityLabel("Add Alarm")
-        } else {
-            Button { showAdd = true } label: {
-                Image(systemName: "plus.circle.fill")
-                    .font(.title2)
-            }
-            .accessibilityLabel("Add Alarm")
         }
     }
 }
