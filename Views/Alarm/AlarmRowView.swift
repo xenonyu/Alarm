@@ -4,8 +4,23 @@ struct AlarmRowView: View {
     let alarm: Alarm
     @Environment(AlarmStore.self) private var store
 
+    private static let lunarMonthNames = [
+        "正月", "二月", "三月", "四月", "五月", "六月",
+        "七月", "八月", "九月", "十月", "冬月", "腊月"
+    ]
+    private static let lunarDayNames = [
+        "初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
+        "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
+        "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"
+    ]
+
     /// Human-readable repeat summary, fully locale-aware via system Calendar symbols.
     var repeatLabel: String {
+        if alarm.isLunar {
+            let m = (1...12).contains(alarm.lunarMonth) ? Self.lunarMonthNames[alarm.lunarMonth - 1] : "\(alarm.lunarMonth)月"
+            let d = (1...30).contains(alarm.lunarDay)   ? Self.lunarDayNames[alarm.lunarDay - 1]     : "\(alarm.lunarDay)日"
+            return "农历 \(m)\(d)"
+        }
         guard alarm.isRepeating else {
             if let date = alarm.targetDate {
                 return date.formatted(.dateTime.month(.abbreviated).day().weekday(.abbreviated))

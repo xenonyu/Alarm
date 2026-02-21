@@ -13,6 +13,14 @@ final class Alarm {
     var isEnabled: Bool
     var createdAt: Date
 
+    // MARK: - Lunar Calendar
+    /// When true, this alarm fires on the same lunar date every year.
+    var isLunar: Bool = false
+    /// Lunar month: 1 = 正月 … 12 = 腊月
+    var lunarMonth: Int = 1
+    /// Lunar day: 1 = 初一 … 30 = 三十
+    var lunarDay: Int = 1
+
     // MARK: - Commute
     /// When commute mode is on, `time` represents the desired *arrival* time.
     /// The "leave now" notification fires at: time − commuteTravelSeconds − commuteBufferMinutes·60
@@ -44,7 +52,7 @@ final class Alarm {
         self.createdAt = Date()
     }
 
-    var isRepeating: Bool { !repeatWeekdays.isEmpty }
+    var isRepeating: Bool { !repeatWeekdays.isEmpty || isLunar }
 
     // MARK: - Calendar Logic
 
@@ -54,7 +62,11 @@ final class Alarm {
         let dateStr = DateFormatter.yyyyMMdd.string(from: date)
         if skipHolidays && holidays.contains(dateStr) { return false }
 
-        if isRepeating {
+        if isLunar {
+            let lunarCal = Calendar(identifier: .chinese)
+            let comps = lunarCal.dateComponents([.month, .day], from: date)
+            return comps.month == lunarMonth && comps.day == lunarDay
+        } else if !repeatWeekdays.isEmpty {
             return repeatWeekdays.contains(Calendar.current.component(.weekday, from: date))
         } else if let target = targetDate {
             return Calendar.current.isDate(date, inSameDayAs: target)
@@ -78,7 +90,11 @@ final class Alarm {
                 let weekday = cal.component(.weekday, from: day)
                 var shouldFire = false
 
-                if isRepeating {
+                if isLunar {
+                    let lunarCal = Calendar(identifier: .chinese)
+                    let comps = lunarCal.dateComponents([.month, .day], from: day)
+                    shouldFire = comps.month == lunarMonth && comps.day == lunarDay
+                } else if !repeatWeekdays.isEmpty {
                     shouldFire = repeatWeekdays.contains(weekday)
                 } else if let target = targetDate {
                     shouldFire = cal.isDate(day, inSameDayAs: target)
@@ -88,7 +104,7 @@ final class Alarm {
                     if fireDate > Date() {
                         results.append(fireDate)
                     }
-                    if !isRepeating { break }
+                    if !isLunar && !isRepeating { break }
                 }
             }
 

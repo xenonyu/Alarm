@@ -15,6 +15,11 @@ final class AppSettings {
         didSet { UserDefaults.standard.set(holidayCountryCode, forKey: "holidayCountryCode") }
     }
 
+    /// Sound file name (without extension) for the alarm ringtone.
+    var ringtone: String {
+        didSet { UserDefaults.standard.set(ringtone, forKey: "ringtone") }
+    }
+
     private init() {
         let saved = UserDefaults.standard.integer(forKey: "snoozeMinutes")
         self.snoozeMinutes = saved > 0 ? saved : 9
@@ -26,5 +31,7 @@ final class AppSettings {
             let supported = HolidayService.supportedCountries.map(\.code)
             self.holidayCountryCode = supported.contains(region) ? region : "CN"
         }
+
+        self.ringtone = UserDefaults.standard.string(forKey: "ringtone") ?? "alarm_classic"
     }
 }

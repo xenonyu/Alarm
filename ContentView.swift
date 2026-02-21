@@ -3,6 +3,7 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(AlarmStore.self) private var store
+    @Environment(AlarmAudioService.self) private var audio
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Alarm.createdAt) private var alarms: [Alarm]
 
@@ -19,10 +20,20 @@ struct ContentView: View {
     }
 
     var body: some View {
-        if #available(iOS 18, *) {
-            tabRootView
-        } else {
-            legacyRootView
+        Group {
+            if #available(iOS 18, *) {
+                tabRootView
+            } else {
+                legacyRootView
+            }
+        }
+        .fullScreenCover(isPresented: Binding(
+            get: { audio.isFiring },
+            set: { if !$0 { audio.stop() } }
+        )) {
+            AlarmFiringView()
+                .environment(audio)
+                .environment(AppSettings.shared)
         }
     }
 

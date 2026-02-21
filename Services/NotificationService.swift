@@ -45,31 +45,41 @@ final class NotificationService {
         await cancel(alarm)
         guard alarm.isEnabled else { return }
 
-        let dates = alarm.nextFireDates(count: 20, holidays: holidays)
-        for date in dates {
-            await scheduleOne(alarm: alarm, at: date)
+        if alarm.commuteEnabled && alarm.commuteTravelSeconds > 0 {
+            // Commute alarms always use UNNotification (departure reminder, not a full alarm)
+            let dates = alarm.nextFireDates(count: 20, holidays: holidays)
+            for date in dates {
+                await scheduleCommuteNotification(alarm: alarm, arrivalDate: date)
+            }
+        } else if #available(iOS 26, *) {
+            // Regular alarms on iOS 26+: system-managed via AlarmKit
+            await AlarmKitService.shared.schedule(alarm, holidays: holidays)
+        } else {
+            // Regular alarms on iOS <26: UNNotification + in-app AlarmAudioService
+            let dates = alarm.nextFireDates(count: 20, holidays: holidays)
+            for date in dates {
+                await scheduleRegularNotification(alarm: alarm, at: date)
+            }
         }
     }
 
-    /// Removes all pending notifications associated with the alarm (both regular and commute).
+    /// Removes all pending notifications and AlarmKit alarms for this alarm.
     func cancel(_ alarm: Alarm) async {
+        // Cancel UNNotifications (commute alarms, and regular alarms on iOS <26)
         let center = UNUserNotificationCenter.current()
         let pending = await center.pendingNotificationRequests()
         let ids = pending
             .filter { $0.identifier.hasPrefix(alarm.id.uuidString) }
             .map(\.identifier)
         center.removePendingNotificationRequests(withIdentifiers: ids)
+
+        // Cancel AlarmKit alarms (iOS 26+)
+        if #available(iOS 26, *) {
+            await AlarmKitService.shared.cancel(alarm)
+        }
     }
 
     // MARK: - Private
-
-    private func scheduleOne(alarm: Alarm, at arrivalDate: Date) async {
-        if alarm.commuteEnabled && alarm.commuteTravelSeconds > 0 {
-            await scheduleCommuteNotification(alarm: alarm, arrivalDate: arrivalDate)
-        } else {
-            await scheduleRegularNotification(alarm: alarm, at: arrivalDate)
-        }
-    }
 
     /// Fires a "leave now" notification before the desired arrival time.
     private func scheduleCommuteNotification(alarm: Alarm, arrivalDate: Date) async {
@@ -95,11 +105,16 @@ final class NotificationService {
     }
 
     private func scheduleRegularNotification(alarm: Alarm, at date: Date) async {
+        let ringtone = AppSettings.shared.ringtone
         let content = UNMutableNotificationContent()
         content.title = alarm.title.isEmpty ? String(localized: "Alarm") : alarm.title
         content.body = date.timeString
-        content.sound = .default
+        content.sound = UNNotificationSound(named: UNNotificationSoundName(rawValue: "\(ringtone).caf"))
         content.categoryIdentifier = NotificationService.alarmCategoryID
+        content.userInfo = [
+            "ringtone": ringtone,
+            "fireTime": date.timeIntervalSince1970
+        ]
 
         let comps = Calendar.current.dateComponents(
             [.year, .month, .day, .hour, .minute], from: date

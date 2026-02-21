@@ -8,6 +8,8 @@ struct CalendarView: UIViewRepresentable {
     @Binding var selectedDate: DateComponents
     let alarms: [Alarm]
     let holidayService: HolidayService
+    /// Bumped by HolidayService each time holiday data loads; forces decoration refresh.
+    let holidayVersion: Int
 
     // MARK: - UIViewRepresentable
 
@@ -47,11 +49,12 @@ struct CalendarView: UIViewRepresentable {
 
     // MARK: - Helpers
 
-    /// A string that changes whenever the set of alarm-date mappings changes.
+    /// A string that changes whenever alarm data or holiday data changes.
     private var refreshToken: String {
-        alarms
-            .map { "\($0.id)-\($0.isEnabled)-\($0.repeatWeekdays.sorted())-\($0.targetDate?.timeIntervalSince1970.rounded() ?? 0)" }
+        let alarmPart = alarms
+            .map { "\($0.id)-\($0.isEnabled)-\($0.repeatWeekdays.sorted())-\($0.targetDate?.timeIntervalSince1970.rounded() ?? 0)-\($0.isLunar)-\($0.lunarMonth)-\($0.lunarDay)" }
             .joined(separator: "|")
+        return alarmPart + "||h\(holidayVersion)"
     }
 
     /// Generates DateComponents for all days in a ±2-year window.

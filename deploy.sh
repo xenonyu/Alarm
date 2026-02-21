@@ -1,40 +1,59 @@
 #!/bin/bash
-# deploy.sh — Build and install Alarm.app
-#   Prefers connected iPhone; falls back to iOS Simulator automatically.
+# deploy.sh — Build and install Alarm.app on device or simulator.
+#
+# NOTE: This script does NOT run xcodegen.
+# Run `xcodegen generate` manually whenever you change project.yml
+# (new frameworks, Info.plist keys, etc.). Source file additions don't need it.
 set -euo pipefail
 
+# ── Config ────────────────────────────────────────────────────────────────────
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT="$PROJECT_DIR/Alarm.xcodeproj"
+SCHEME="Alarm"
+BUNDLE_ID="com.yumingxie.Alarm"
+DERIVED_DATA="/tmp/AlarmBuild"
 
-# ── 1. Regenerate Xcode project ──────────────────────────────────────────────
-echo "▶ xcodegen..."
-xcodegen generate --project "$PROJECT_DIR" --quiet
+# Point to Xcode 26.2 (non-standard path)
+export DEVELOPER_DIR=/Applications/Xcode-26.2.0.app/Contents/Developer
+XCODEBUILD="$DEVELOPER_DIR/usr/bin/xcodebuild"
 
-# ── 2. Detect target: real device or simulator ───────────────────────────────
+# ── 1. Detect target ──────────────────────────────────────────────────────────
 USE_SIMULATOR=false
-DEVICE_ID=""
+
+# xcodebuild needs the ECID from xctrace (e.g. 00008120-000C45EE1E69A01E)
+# devicectl install needs the UUID from devicectl  (e.g. AC84334B-7FB1-5274-...)
+XCODE_DEVICE_ID=""
+DEVICECTL_ID=""
 DEVICE_NAME=""
 
-# Retry up to 15s to handle transient connection flicker
-DEVICE_LINE=""
 for _retry in $(seq 1 15); do
-    DEVICE_LINE=$(xcrun devicectl list devices 2>/dev/null | grep "connected" || true)
-    [[ -n "$DEVICE_LINE" ]] && break
-    [[ $_retry -eq 1 ]] && printf "  Waiting for device connection"
+    # xctrace format: "Yuming's iPhone (26.3) (00008120-000C45EE1E69A01E)"
+    XCTRACE_LINE=$(xcrun xctrace list devices 2>/dev/null \
+        | sed '/== Simulators ==/q' \
+        | grep -v "==" \
+        | grep "iPhone" \
+        | head -1 || true)
+    [[ -n "$XCTRACE_LINE" ]] && break
+    [[ $_retry -eq 1 ]] && printf "  Waiting for device"
     printf "."
     sleep 1
 done
-[[ -n "$DEVICE_LINE" ]] || echo ""  # newline after dots if fell through
+[[ -n "${XCTRACE_LINE:-}" ]] || echo ""
 
-if [[ -n "$DEVICE_LINE" ]]; then
-    # Extract UUID identifier (robust against spaces in device name)
-    DEVICE_ID=$(echo "$DEVICE_LINE" \
-        | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}' \
-        | head -1)
-    DEVICE_NAME=$(echo "$DEVICE_LINE" | awk '{print $1, $2}' | sed 's/[[:space:]]*$//')
-    echo "▶ Target: iPhone — $DEVICE_NAME ($DEVICE_ID)"
+if [[ -n "${XCTRACE_LINE:-}" ]]; then
+    # Extract last parenthesised group → ECID for xcodebuild
+    XCODE_DEVICE_ID=$(echo "$XCTRACE_LINE" \
+        | grep -oE '\([0-9A-Fa-f-]+\)' | tail -1 | tr -d '()')
+    DEVICE_NAME=$(echo "$XCTRACE_LINE" | sed 's/ (.*//')
+
+    # Also get the devicectl UUID (for 'devicectl device install')
+    DEVICECTL_ID=$(xcrun devicectl list devices 2>/dev/null \
+        | grep "connected" \
+        | grep -oiE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}' \
+        | head -1 || true)
+
+    echo "▶ Target: iPhone — $DEVICE_NAME (xcodebuild: $XCODE_DEVICE_ID)"
 else
-    # Fall back to simulator
     USE_SIMULATOR=true
     SIM_ID=$(xcrun simctl list devices booted --json 2>/dev/null \
         | python3 -c "
@@ -54,7 +73,6 @@ devs=[dev for devs in d['devices'].values() for dev in devs
 devs.sort(key=lambda x: x['name'], reverse=True)
 print(devs[0]['udid'] if devs else '')
 " 2>/dev/null || true)
-        echo "▶ Booting simulator..."
         xcrun simctl boot "$SIM_ID" 2>/dev/null || true
         open -a Simulator 2>/dev/null || true
         sleep 4
@@ -72,62 +90,55 @@ for devs in d['devices'].values():
     echo "▶ Target: Simulator — $SIM_NAME ($SIM_ID)"
 fi
 
-# ── 3. Build ──────────────────────────────────────────────────────────────────
+# ── 2. Build ──────────────────────────────────────────────────────────────────
 echo "▶ Building..."
 
 if [[ "$USE_SIMULATOR" == "true" ]]; then
-    xcodebuild build \
+    "$XCODEBUILD" build \
         -project "$PROJECT" \
-        -scheme Alarm \
+        -scheme "$SCHEME" \
         -destination "platform=iOS Simulator,id=$SIM_ID" \
-        -derivedDataPath /tmp/AlarmBuild \
-        -quiet \
-        2>&1 | grep -E "error:|BUILD (SUCCEEDED|FAILED)" | grep -v "^    " || true
+        -derivedDataPath "$DERIVED_DATA" \
+        -quiet
 
-    APP_PATH=$(find /tmp/AlarmBuild/Build/Products -name "Alarm.app" \
+    APP_PATH=$(find "$DERIVED_DATA/Build/Products" -name "Alarm.app" \
         -not -path "*/AlarmUITests*" 2>/dev/null | head -1)
     echo "▶ Installing on simulator..."
     xcrun simctl install "$SIM_ID" "$APP_PATH"
-    xcrun simctl launch "$SIM_ID" com.example.Alarm
+    xcrun simctl launch "$SIM_ID" "$BUNDLE_ID"
     echo "✓ Alarm.app launched on $SIM_NAME!"
 
 else
-    # Real device — Xcode handles signing
-    # Step 1: uninstall old version so we can reliably detect when new one arrives
-    echo "▶ Uninstalling old version from device..."
-    xcrun devicectl device uninstall app \
-        --device "$DEVICE_ID" com.example.Alarm 2>/dev/null || true
+    # Real device: -allowProvisioningUpdates lets xcodebuild handle signing
+    # automatically using the Apple ID session from Xcode.
+    # First run may show a macOS keychain prompt — click "Always Allow".
+    "$XCODEBUILD" build \
+        -project "$PROJECT" \
+        -scheme "$SCHEME" \
+        -destination "id=$XCODE_DEVICE_ID" \
+        -derivedDataPath "$DERIVED_DATA" \
+        -allowProvisioningUpdates \
+        DEVELOPMENT_TEAM=MS49M8LMJ8 \
+        CODE_SIGN_STYLE=Automatic \
+        -quiet
 
-    # Step 2: open project in Xcode (brings window to front)
-    open -a Xcode "$PROJECT"
-    sleep 2
+    APP_PATH=$(find "$DERIVED_DATA/Build/Products/Debug-iphoneos" -maxdepth 1 \
+        -name "Alarm.app" 2>/dev/null | head -1)
 
-    # Step 3: prompt — Xcode destination can't be set from command line
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "  Xcode is open. Please:"
-    echo "  1. Select '$DEVICE_NAME' in the destination picker"
-    echo "  2. Press ▶  (⌘R) to build & install"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo ""
-    echo "▶ Waiting for install to complete (up to 5 min)..."
+    if [[ -z "$APP_PATH" ]]; then
+        echo "✗ Could not find Alarm.app after build"
+        exit 1
+    fi
 
-    for i in $(seq 1 150); do
-        sleep 2
-        if xcrun devicectl device info apps \
-            --device "$DEVICE_ID" 2>/dev/null \
-            | grep -q "com.example.Alarm"; then
-            echo "✓ Alarm.app installed on $DEVICE_NAME!"
-            xcrun devicectl device process launch \
-                --device "$DEVICE_ID" com.example.Alarm 2>/dev/null || true
-            echo "✓ App launched!"
-            exit 0
-        fi
-        if (( i % 10 == 0 )); then
-            printf "  Waiting... (%ds)\n" $((i * 2))
-        fi
-    done
+    echo "▶ Installing on $DEVICE_NAME..."
+    xcrun devicectl device install app \
+        --device "$DEVICECTL_ID" \
+        "$APP_PATH"
 
-    echo "⚠ Timed out after 5 min. Did you press ▶ in Xcode?"
-    exit 1
+    echo "▶ Launching..."
+    xcrun devicectl device process launch \
+        --device "$DEVICECTL_ID" \
+        "$BUNDLE_ID" 2>/dev/null || true
+
+    echo "✓ Alarm.app installed and launched on $DEVICE_NAME!"
 fi

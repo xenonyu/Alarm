@@ -35,6 +35,39 @@ struct SettingsView: View {
                 Text("Select a country to load its official public holidays.")
             }
 
+            // ── Ringtone ──────────────────────────────────────────────────────────
+            Section {
+                ForEach(AlarmAudioService.ringtones, id: \.id) { tone in
+                    Button {
+                        settings.ringtone = tone.id
+                        // Preview the selected ringtone
+                        AlarmAudioService.shared.start(
+                            title: "",
+                            time: Date(),
+                            ringtone: tone.id
+                        )
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            AlarmAudioService.shared.stop()
+                        }
+                    } label: {
+                        HStack {
+                            Text(tone.displayName)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            if settings.ringtone == tone.id {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(.tint)
+                                    .fontWeight(.semibold)
+                            }
+                        }
+                    }
+                }
+            } header: {
+                Label("Ringtone", systemImage: "music.note")
+            } footer: {
+                Text("Tap a ringtone to preview it.")
+            }
+
             // ── Snooze ───────────────────────────────────────────────────────────
             Section {
                 Picker("Duration", selection: $settings.snoozeMinutes) {

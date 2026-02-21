@@ -1,6 +1,6 @@
 name: Alarm
 options:
-  bundleIdPrefix: com.example
+  bundleIdPrefix: com.yumingxie
   deploymentTarget:
     iOS: "17.0"
   xcodeVersion: "16.0"
@@ -31,6 +31,7 @@ targets:
     resources:
       - path: Assets.xcassets
       - path: Localizable.xcstrings
+      - path: Sounds
     info:
       path: Info.plist
       properties:
@@ -46,6 +47,10 @@ targets:
         CFBundleLocalizations:
           - en
           - zh-Hans
+        UIBackgroundModes:
+          - audio
+        NSSupportsLiveActivities: true
+        NSSupportsLiveActivitiesFrequentUpdates: true
         NSLocationWhenInUseUsageDescription: "Alarm uses your location to calculate real-time commute duration and remind you to leave on time."
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
@@ -64,7 +69,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.Alarm
+        PRODUCT_BUNDLE_IDENTIFIER: com.yumingxie.Alarm
         INFOPLIST_FILE: Info.plist
         DEVELOPMENT_TEAM: MS49M8LMJ8
         CODE_SIGN_STYLE: Automatic
@@ -73,6 +78,9 @@ targets:
       - sdk: MapKit.framework
       - sdk: CoreLocation.framework
       - sdk: UserNotifications.framework
+      - sdk: AlarmKit.framework
+      - sdk: AppIntents.framework
+      - sdk: ActivityKit.framework
 
   AlarmUITests:
     type: bundle.ui-testing

@@ -28,57 +28,6 @@
     "15 min" : {
 
     },
-    "Holiday Region" : {
-      "comment" : "Settings row and picker navigation title for holiday country selection",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Holiday Region"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "节假日地区"
-          }
-        }
-      }
-    },
-    "Public Holidays" : {
-      "comment" : "Settings section header for holiday region selection",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Public Holidays"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "法定节假日"
-          }
-        }
-      }
-    },
-    "Select a country to load its official public holidays." : {
-      "comment" : "Footer in Settings under the holiday region section",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select a country to load its official public holidays."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "选择国家/地区以加载官方法定节假日数据。"
-          }
-        }
-      }
-    },
     "About" : {
       "comment" : "Settings section header",
       "extractionState" : "stale",
@@ -344,6 +293,23 @@
         }
       }
     },
+    "Holiday Region" : {
+      "comment" : "Settings row and picker navigation title for holiday country selection",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Holiday Region"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节假日地区"
+          }
+        }
+      }
+    },
     "in" : {
 
     },
@@ -587,6 +553,24 @@
         }
       }
     },
+    "Public Holidays" : {
+      "comment" : "Settings section header for holiday region selection",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Public Holidays"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "法定节假日"
+          }
+        }
+      }
+    },
     "Repeat" : {
       "comment" : "Form section header – repeat settings",
       "extractionState" : "stale",
@@ -658,6 +642,23 @@
         }
       }
     },
+    "Select a country to load its official public holidays." : {
+      "comment" : "Footer in Settings under the holiday region section",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select a country to load its official public holidays."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择国家/地区以加载官方法定节假日数据。"
+          }
+        }
+      }
+    },
     "Select Destination" : {
       "comment" : "Navigation title of destination picker sheet",
       "extractionState" : "stale",
@@ -715,6 +716,9 @@
     "Snooze duration when you tap Snooze on an alarm notification." : {
 
     },
+    "Stop" : {
+
+    },
     "Tap + to add an alarm for this day" : {
       "comment" : "Empty state hint in alarm list",
       "localizations" : {
@@ -733,6 +737,9 @@
       }
     },
     "Tap + to add your first alarm" : {
+
+    },
+    "Tap a ringtone to preview it." : {
 
     },
     "Time to Leave!" : {

@@ -17,7 +17,8 @@ struct AlarmListView: View {
                 CalendarView(
                     selectedDate: $selectedDateComps,
                     alarms: allAlarms,
-                    holidayService: store.holidayService
+                    holidayService: store.holidayService,
+                    holidayVersion: store.holidayService.holidayVersion
                 )
                 .padding(.horizontal, 4)
             }
@@ -81,8 +82,8 @@ struct AlarmListView: View {
                 Text(date, format: .dateTime.month(.wide).day().weekday(.wide))
                     .font(.headline)
 
-                if store.holidayService.isHoliday(date) {
-                    Label("Public Holiday", systemImage: "calendar.badge.minus")
+                if let name = store.holidayService.holidayName(for: date) {
+                    Label(name, systemImage: "calendar.badge.minus")
                         .font(.caption)
                         .foregroundStyle(.red)
                 }

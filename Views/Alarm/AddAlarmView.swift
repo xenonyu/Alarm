@@ -15,6 +15,11 @@ struct AddAlarmView: View {
     @State private var repeatWeekdays: Set<Int>
     @State private var skipHolidays: Bool
 
+    // MARK: - Lunar state
+    @State private var isLunar: Bool
+    @State private var lunarMonth: Int   // 1–12
+    @State private var lunarDay: Int     // 1–30
+
     // MARK: - Commute state
     @State private var commuteEnabled: Bool
     @State private var commuteDestName: String
@@ -43,9 +48,12 @@ struct AddAlarmView: View {
             _title              = State(wrappedValue: alarm.title)
             _time               = State(wrappedValue: alarm.time)
             _targetDate         = State(wrappedValue: alarm.targetDate ?? initialDate)
-            _isRepeating        = State(wrappedValue: alarm.isRepeating)
+            _isRepeating        = State(wrappedValue: !alarm.repeatWeekdays.isEmpty)
             _repeatWeekdays     = State(wrappedValue: Set(alarm.repeatWeekdays))
             _skipHolidays       = State(wrappedValue: alarm.skipHolidays)
+            _isLunar            = State(wrappedValue: alarm.isLunar)
+            _lunarMonth         = State(wrappedValue: alarm.lunarMonth)
+            _lunarDay           = State(wrappedValue: alarm.lunarDay)
             _commuteEnabled     = State(wrappedValue: alarm.commuteEnabled)
             _commuteDestName    = State(wrappedValue: alarm.commuteDestinationName)
             _commuteLatitude    = State(wrappedValue: alarm.commuteLatitude)
@@ -59,6 +67,9 @@ struct AddAlarmView: View {
             _isRepeating        = State(wrappedValue: false)
             _repeatWeekdays     = State(wrappedValue: [])
             _skipHolidays       = State(wrappedValue: false)
+            _isLunar            = State(wrappedValue: false)
+            _lunarMonth         = State(wrappedValue: 1)
+            _lunarDay           = State(wrappedValue: 1)
             _commuteEnabled     = State(wrappedValue: false)
             _commuteDestName    = State(wrappedValue: "")
             _commuteLatitude    = State(wrappedValue: 0)
@@ -78,7 +89,7 @@ struct AddAlarmView: View {
     }
 
     var canSave: Bool {
-        if isRepeating && repeatWeekdays.isEmpty { return false }
+        if !isLunar && isRepeating && repeatWeekdays.isEmpty { return false }
         if commuteEnabled && commuteLatitude == 0 { return false }
         return true
     }
@@ -107,11 +118,17 @@ struct AddAlarmView: View {
 
                 // Repeat
                 Section("Repeat") {
-                    Toggle("Repeat by Weekday", isOn: $isRepeating.animation())
-                    if isRepeating {
-                        weekdaySelector
+                    Toggle("Lunar Date (Annual)", isOn: $isLunar.animation())
+
+                    if isLunar {
+                        lunarPicker
                     } else {
-                        DatePicker("Date", selection: $targetDate, displayedComponents: .date)
+                        Toggle("Repeat by Weekday", isOn: $isRepeating.animation())
+                        if isRepeating {
+                            weekdaySelector
+                        } else {
+                            DatePicker("Date", selection: $targetDate, displayedComponents: .date)
+                        }
                     }
                 }
 
@@ -204,6 +221,41 @@ struct AddAlarmView: View {
         }
     }
 
+    // MARK: - Lunar Picker
+
+    private static let lunarMonthNames = [
+        "正月", "二月", "三月", "四月", "五月", "六月",
+        "七月", "八月", "九月", "十月", "冬月", "腊月"
+    ]
+    private static let lunarDayNames = [
+        "初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
+        "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
+        "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"
+    ]
+
+    private var lunarPicker: some View {
+        HStack {
+            Picker("Month", selection: $lunarMonth) {
+                ForEach(1...12, id: \.self) { m in
+                    Text(Self.lunarMonthNames[m - 1]).tag(m)
+                }
+            }
+            .pickerStyle(.wheel)
+            .frame(maxWidth: .infinity)
+            .clipped()
+
+            Picker("Day", selection: $lunarDay) {
+                ForEach(1...30, id: \.self) { d in
+                    Text(Self.lunarDayNames[d - 1]).tag(d)
+                }
+            }
+            .pickerStyle(.wheel)
+            .frame(maxWidth: .infinity)
+            .clipped()
+        }
+        .frame(height: 120)
+    }
+
     // MARK: - Weekday Selector
 
     private var weekdaySelector: some View {
@@ -262,8 +314,11 @@ struct AddAlarmView: View {
             // Edit existing alarm
             existing.title             = title
             existing.time              = time
-            existing.targetDate        = isRepeating ? nil : targetDate
-            existing.repeatWeekdays    = Array(repeatWeekdays)
+            existing.isLunar           = isLunar
+            existing.lunarMonth        = lunarMonth
+            existing.lunarDay          = lunarDay
+            existing.targetDate        = (isLunar || isRepeating) ? nil : targetDate
+            existing.repeatWeekdays    = isLunar ? [] : Array(repeatWeekdays)
             existing.skipHolidays      = skipHolidays
             existing.commuteEnabled    = commuteEnabled
             if commuteEnabled && commuteLatitude != 0 {
@@ -282,10 +337,13 @@ struct AddAlarmView: View {
             let alarm = Alarm(
                 title: title,
                 time: time,
-                targetDate: isRepeating ? nil : targetDate,
-                repeatWeekdays: Array(repeatWeekdays),
+                targetDate: (isLunar || isRepeating) ? nil : targetDate,
+                repeatWeekdays: isLunar ? [] : Array(repeatWeekdays),
                 skipHolidays: skipHolidays
             )
+            alarm.isLunar    = isLunar
+            alarm.lunarMonth = lunarMonth
+            alarm.lunarDay   = lunarDay
             if commuteEnabled && commuteLatitude != 0 {
                 alarm.commuteEnabled         = true
                 alarm.commuteDestinationName = commuteDestName
