@@ -85,6 +85,27 @@ struct SettingsView: View {
                 Text("Snooze duration when you tap Snooze on an alarm notification.")
             }
 
+            // ── iCloud Sync ───────────────────────────────────────────────────────
+            Section {
+                HStack {
+                    Label("iCloud Sync", systemImage: "icloud")
+                    Spacer()
+                    if FileManager.default.ubiquityIdentityToken != nil {
+                        Text("Active")
+                            .font(.caption)
+                            .foregroundStyle(.green)
+                    } else {
+                        Text("Unavailable")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } header: {
+                Label("Sync", systemImage: "arrow.triangle.2.circlepath")
+            } footer: {
+                Text("Alarms sync automatically across devices signed into the same iCloud account.")
+            }
+
             // ── Permissions ───────────────────────────────────────────────────────
             Section {
                 if #available(iOS 26, *) {
