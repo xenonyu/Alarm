@@ -71,7 +71,9 @@ struct AllAlarmsView: View {
             }
 
             // ── Next alarm countdown ──────────────────────────────────────────────
-            // TimelineView re-renders every minute so stale past dates are dropped.
+            // Outer guard reacts immediately to toggle changes (SwiftData array).
+            // Inner TimelineView drops past dates by re-evaluating every minute.
+            if alarms.contains(where: \.isEnabled) {
             TimelineView(.everyMinute) { context in
                 if let next = nextAlarmDate(after: context.date) {
                     Section {
@@ -110,6 +112,7 @@ struct AllAlarmsView: View {
                     .listRowSeparator(.hidden)
                 }
             }
+            } // end if alarms.contains(where: \.isEnabled)
 
             if alarms.isEmpty {
                 Section {
