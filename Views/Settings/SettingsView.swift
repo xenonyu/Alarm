@@ -85,6 +85,27 @@ struct SettingsView: View {
                 Text("Snooze duration when you tap Snooze on an alarm notification.")
             }
 
+            // ── Peak Hours ────────────────────────────────────────────────────────
+            Section {
+                Toggle(isOn: $settings.peakHoursAutoAdjust) {
+                    Label("Peak Hour Auto-Adjust", systemImage: "clock.badge.exclamationmark")
+                }
+                if settings.peakHoursAutoAdjust {
+                    Stepper(value: $settings.peakHoursExtraMinutes, in: 5...60, step: 5) {
+                        HStack {
+                            Text("Extra Buffer")
+                            Spacer()
+                            Text("+\(settings.peakHoursExtraMinutes) min")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            } header: {
+                Label("Commute Peak Hours", systemImage: "car.fill")
+            } footer: {
+                Text("Adds extra buffer to commute alarm departures during weekday rush hours (Mon–Fri 7–9am and 5–7pm).")
+            }
+
             // ── iCloud Sync ───────────────────────────────────────────────────────
             Section {
                 HStack {

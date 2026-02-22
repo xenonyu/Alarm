@@ -21,6 +21,18 @@ final class AppSettings {
         didSet { defaults.set(ringtone, forKey: "ringtone") }
     }
 
+    // MARK: - Peak Hours
+
+    /// When true, adds extra buffer to commute alarms during Mon–Fri peak hours (7–9am, 5–7pm).
+    var peakHoursAutoAdjust: Bool {
+        didSet { defaults.set(peakHoursAutoAdjust, forKey: "peakHoursAutoAdjust") }
+    }
+
+    /// Extra minutes added to the commute buffer during peak hours.
+    var peakHoursExtraMinutes: Int {
+        didSet { defaults.set(peakHoursExtraMinutes, forKey: "peakHoursExtraMinutes") }
+    }
+
     private init() {
         let saved = defaults.integer(forKey: "snoozeMinutes")
         self.snoozeMinutes = saved > 0 ? saved : 9
@@ -34,5 +46,8 @@ final class AppSettings {
         }
 
         self.ringtone = defaults.string(forKey: "ringtone") ?? "alarm_classic"
+        self.peakHoursAutoAdjust = defaults.bool(forKey: "peakHoursAutoAdjust")
+        let savedPeak = defaults.integer(forKey: "peakHoursExtraMinutes")
+        self.peakHoursExtraMinutes = savedPeak > 0 ? savedPeak : 15
     }
 }

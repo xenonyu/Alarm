@@ -81,10 +81,24 @@ final class NotificationService {
 
     // MARK: - Private
 
+    /// Returns true if `date` falls within a weekday peak-hour window (Mon–Fri 7–9am or 5–7pm).
+    private func isPeakHour(_ date: Date) -> Bool {
+        let cal = Calendar.current
+        let weekday = cal.component(.weekday, from: date)
+        guard (2...6).contains(weekday) else { return false } // Mon–Fri only
+        let hour = cal.component(.hour, from: date)
+        let minute = cal.component(.minute, from: date)
+        let totalMinutes = hour * 60 + minute
+        return (7 * 60 ..< 9 * 60).contains(totalMinutes) || (17 * 60 ..< 19 * 60).contains(totalMinutes)
+    }
+
     /// Fires a "leave now" notification before the desired arrival time.
     private func scheduleCommuteNotification(alarm: Alarm, arrivalDate: Date) async {
+        let settings = AppSettings.shared
+        let peakExtra = settings.peakHoursAutoAdjust && isPeakHour(arrivalDate)
+            ? Double(settings.peakHoursExtraMinutes) * 60 : 0
         let departureDate = arrivalDate.addingTimeInterval(
-            -(alarm.commuteTravelSeconds + Double(alarm.commuteBufferMinutes) * 60)
+            -(alarm.commuteTravelSeconds + Double(alarm.commuteBufferMinutes) * 60 + peakExtra)
         )
         guard departureDate > Date() else { return }
 
