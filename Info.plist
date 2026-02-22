@@ -25,6 +25,8 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSAlarmKitUsageDescription</key>
+	<string>Alarm uses AlarmKit to ring alarms reliably even when the app is not running.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Alarm uses your location to calculate real-time commute duration and remind you to leave on time.</string>
 	<key>NSSupportsLiveActivities</key>

@@ -13,7 +13,16 @@
     "~%@ min" : {
 
     },
+    "1. Tap **Open Settings** above" : {
+
+    },
     "1.0" : {
+
+    },
+    "2. Scroll down and tap **Alarm**" : {
+
+    },
+    "3. Enable the **Alarms** toggle" : {
 
     },
     "5 min" : {
@@ -62,6 +71,9 @@
           }
         }
       }
+    },
+    "Alarm Permission Required" : {
+
     },
     "Alarms" : {
       "comment" : "App / navigation title",
@@ -367,7 +379,7 @@
         }
       }
     },
-    "Manage notification and location access in iOS Settings." : {
+    "Manage alarm, notification and location access in iOS Settings." : {
 
     },
     "Manage notification and location permissions in iOS Settings." : {
@@ -445,6 +457,9 @@
         }
       }
     },
+    "Not Allowed" : {
+
+    },
     "Not Set" : {
       "comment" : "Placeholder when no destination is chosen",
       "extractionState" : "stale",
@@ -498,6 +513,9 @@
           }
         }
       }
+    },
+    "Open Settings" : {
+
     },
     "Options" : {
       "comment" : "Form section header – optional settings",
@@ -759,6 +777,9 @@
           }
         }
       }
+    },
+    "To allow alarms to ring:" : {
+
     },
     "Transit" : {
       "comment" : "Transport mode – public transit",

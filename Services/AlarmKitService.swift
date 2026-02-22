@@ -69,19 +69,19 @@ final class AlarmKitService {
             }
         }
 
-        UserDefaults.standard.set(kitIDs, forKey: udKey(for: alarm))
+        (UserDefaults(suiteName: appGroupID) ?? .standard).set(kitIDs, forKey: udKey(for: alarm))
     }
 
     // MARK: - Cancel
 
     func cancel(_ alarm: Alarm) async {
-        let kitIDs = UserDefaults.standard.stringArray(forKey: udKey(for: alarm)) ?? []
+        let kitIDs = (UserDefaults(suiteName: appGroupID) ?? .standard).stringArray(forKey: udKey(for: alarm)) ?? []
         for idStr in kitIDs {
             if let uuid = UUID(uuidString: idStr) {
                 try? AlarmManager.shared.cancel(id: uuid)
             }
         }
-        UserDefaults.standard.removeObject(forKey: udKey(for: alarm))
+        (UserDefaults(suiteName: appGroupID) ?? .standard).removeObject(forKey: udKey(for: alarm))
     }
 
     // MARK: - Private

@@ -74,6 +74,7 @@ targets:
         INFOPLIST_FILE: Info.plist
         DEVELOPMENT_TEAM: MS49M8LMJ8
         CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: Alarm/Alarm.entitlements
     dependencies:
       - sdk: SwiftData.framework
       - sdk: MapKit.framework

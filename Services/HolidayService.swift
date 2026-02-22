@@ -121,9 +121,11 @@ final class HolidayService {
 
     private var cacheKey: String { "HolidayCache_v3_\(countryCode)" }
 
+    private var groupDefaults: UserDefaults { UserDefaults(suiteName: appGroupID) ?? .standard }
+
     private func loadFromCache() {
         guard
-            let data = UserDefaults.standard.data(forKey: cacheKey),
+            let data = groupDefaults.data(forKey: cacheKey),
             let decoded = try? JSONDecoder().decode([Int: [String: String]].self, from: data)
         else { return }
         holidaysByYear = decoded
@@ -132,7 +134,7 @@ final class HolidayService {
 
     private func saveToCache() {
         if let data = try? JSONEncoder().encode(holidaysByYear) {
-            UserDefaults.standard.set(data, forKey: cacheKey)
+            groupDefaults.set(data, forKey: cacheKey)
         }
     }
 
