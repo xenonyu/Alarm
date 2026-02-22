@@ -10,7 +10,7 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT="$PROJECT_DIR/Alarm.xcodeproj"
 SCHEME="Alarm"
-BUNDLE_ID="com.yumingxie.Alarm"
+BUNDLE_ID="Alarm.com"
 DERIVED_DATA="/tmp/AlarmBuild"
 
 # Point to Xcode 26.2 (non-standard path)
@@ -112,15 +112,41 @@ else
     # Real device: -allowProvisioningUpdates lets xcodebuild handle signing
     # automatically using the Apple ID session from Xcode.
     # First run may show a macOS keychain prompt — click "Always Allow".
+    BUILD_LOG=$(mktemp /tmp/alarm-build-XXXXXX.log)
+    set +e
     "$XCODEBUILD" build \
         -project "$PROJECT" \
         -scheme "$SCHEME" \
         -destination "id=$XCODE_DEVICE_ID" \
         -derivedDataPath "$DERIVED_DATA" \
         -allowProvisioningUpdates \
-        DEVELOPMENT_TEAM=MS49M8LMJ8 \
+        DEVELOPMENT_TEAM=HKK65P5735 \
         CODE_SIGN_STYLE=Automatic \
-        -quiet
+        -quiet 2>&1 | tee "$BUILD_LOG"
+    BUILD_EXIT=${PIPESTATUS[0]}
+    set -e
+
+    if [[ $BUILD_EXIT -ne 0 ]]; then
+        if grep -q "No Accounts\|No profiles" "$BUILD_LOG" 2>/dev/null; then
+            echo ""
+            echo "✗ 签名失败：Xcode 未登录 Apple 账号，provisioning profile 无法下载。"
+            echo ""
+            echo "  请按以下步骤操作（只需一次）："
+            echo "  1. 打开 Xcode-26.2.0"
+            echo "  2. Xcode → Settings → Accounts"
+            echo "  3. 点击 + 添加 yumingxie46@gmail.com"
+            echo "  4. 登录后 Xcode 会自动下载 provisioning profiles"
+            echo "  5. 关闭 Xcode，重新运行 ./deploy.sh"
+            echo ""
+            echo "  正在自动打开 Xcode Settings → Accounts..."
+            open -a "/Applications/Xcode-26.2.0.app" 2>/dev/null || true
+        else
+            grep "error:" "$BUILD_LOG" 2>/dev/null | head -10 || true
+        fi
+        rm -f "$BUILD_LOG"
+        exit 1
+    fi
+    rm -f "$BUILD_LOG"
 
     APP_PATH=$(find "$DERIVED_DATA/Build/Products/Debug-iphoneos" -maxdepth 1 \
         -name "Alarm.app" 2>/dev/null | head -1)

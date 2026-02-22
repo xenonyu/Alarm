@@ -9,7 +9,7 @@ struct AlarmApp: App {
 
     private static let modelContainer: ModelContainer = {
         let config = ModelConfiguration(
-            cloudKitDatabase: .private("iCloud.com.yumingxie.Alarm")
+            cloudKitDatabase: .private("iCloud.Alarm.com")
         )
         return try! ModelContainer(for: Alarm.self, configurations: config)
     }()

@@ -73,9 +73,9 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.yumingxie.Alarm
+        PRODUCT_BUNDLE_IDENTIFIER: Alarm.com
         INFOPLIST_FILE: Info.plist
-        DEVELOPMENT_TEAM: MS49M8LMJ8
+        DEVELOPMENT_TEAM: HKK65P5735
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: Alarm/Alarm.entitlements
     dependencies:
@@ -100,8 +100,8 @@ targets:
       - path: Shared
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.yumingxie.Alarm.AlarmWidget
-        DEVELOPMENT_TEAM: MS49M8LMJ8
+        PRODUCT_BUNDLE_IDENTIFIER: Alarm.com.AlarmWidget
+        DEVELOPMENT_TEAM: HKK65P5735
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: AlarmWidget/AlarmWidget.entitlements
     dependencies:
@@ -128,7 +128,7 @@ targets:
       - path: UITests
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.AlarmUITests
+        PRODUCT_BUNDLE_IDENTIFIER: Alarm.com.AlarmUITests
         TEST_TARGET_NAME: Alarm
         GENERATE_INFOPLIST_FILE: YES
         FRAMEWORK_SEARCH_PATHS: "$(DEVELOPER_FRAMEWORKS_DIR) $(PLATFORM_DIR)/Developer/Library/Frameworks $(inherited)"
