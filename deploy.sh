@@ -109,37 +109,70 @@ if [[ "$USE_SIMULATOR" == "true" ]]; then
     echo "✓ Alarm.app launched on $SIM_NAME!"
 
 else
-    # Real device: -allowProvisioningUpdates lets xcodebuild handle signing
-    # automatically using the Apple ID session from Xcode.
-    # First run may show a macOS keychain prompt — click "Always Allow".
+    # ── Real device signing strategy ──────────────────────────────────────────
+    # Xcode 26 stores auth tokens in a way xcodebuild CLI can't access directly.
+    # Strategy:
+    #   1. If a local provisioning profile for com.example.Alarm already exists
+    #      (created by a prior Xcode GUI build), use it with Manual signing.
+    #   2. Otherwise, fall back to -allowProvisioningUpdates and show guidance.
+
+    PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+    PROFILE_UUID=""
+
+    # Find the Xcode-managed profile for our bundle ID
+    for pf in "$PROFILES_DIR"/*.mobileprovision; do
+        [[ -f "$pf" ]] || continue
+        content=$(security cms -D -i "$pf" 2>/dev/null) || continue
+        if echo "$content" | grep -q "com.example.Alarm"; then
+            if echo "$content" | grep -q "HKK65P5735"; then
+                PROFILE_UUID=$(echo "$content" | plutil -extract UUID raw - 2>/dev/null || true)
+                [[ -n "$PROFILE_UUID" ]] && break
+            fi
+        fi
+    done
+
     BUILD_LOG=$(mktemp /tmp/alarm-build-XXXXXX.log)
     set +e
-    "$XCODEBUILD" build \
-        -project "$PROJECT" \
-        -scheme "$SCHEME" \
-        -destination "id=$XCODE_DEVICE_ID" \
-        -derivedDataPath "$DERIVED_DATA" \
-        -allowProvisioningUpdates \
-        DEVELOPMENT_TEAM=HKK65P5735 \
-        CODE_SIGN_STYLE=Automatic \
-        -quiet 2>&1 | tee "$BUILD_LOG"
+
+    if [[ -n "$PROFILE_UUID" ]]; then
+        echo "  (Using cached profile: $PROFILE_UUID)"
+        "$XCODEBUILD" build \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination "id=$XCODE_DEVICE_ID" \
+            -derivedDataPath "$DERIVED_DATA" \
+            DEVELOPMENT_TEAM=HKK65P5735 \
+            CODE_SIGN_STYLE=Manual \
+            PROVISIONING_PROFILE="$PROFILE_UUID" \
+            -quiet 2>&1 | tee "$BUILD_LOG"
+    else
+        "$XCODEBUILD" build \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination "id=$XCODE_DEVICE_ID" \
+            -derivedDataPath "$DERIVED_DATA" \
+            -allowProvisioningUpdates \
+            -allowProvisioningDeviceRegistration \
+            DEVELOPMENT_TEAM=HKK65P5735 \
+            CODE_SIGN_STYLE=Automatic \
+            -quiet 2>&1 | tee "$BUILD_LOG"
+    fi
+
     BUILD_EXIT=${PIPESTATUS[0]}
     set -e
 
     if [[ $BUILD_EXIT -ne 0 ]]; then
         if grep -q "No Accounts\|No profiles" "$BUILD_LOG" 2>/dev/null; then
             echo ""
-            echo "✗ 签名失败：Xcode 未登录 Apple 账号，provisioning profile 无法下载。"
+            echo "✗ 需要先从 Xcode GUI 构建一次（只需一次，之后全自动）："
             echo ""
-            echo "  请按以下步骤操作（只需一次）："
-            echo "  1. 打开 Xcode-26.2.0"
-            echo "  2. Xcode → Settings → Accounts"
-            echo "  3. 点击 + 添加 yumingxie46@gmail.com"
-            echo "  4. 登录后 Xcode 会自动下载 provisioning profiles"
-            echo "  5. 关闭 Xcode，重新运行 ./deploy.sh"
+            echo "  1. Xcode 已打开，选择顶部设备栏中的 'Yuming's iPhone'"
+            echo "  2. 打开 Signing & Capabilities，Team 选 'Personal Team'"
+            echo "  3. 按 ⌘R（Run）安装到手机"
+            echo "  4. 手机上：设置 → 通用 → VPN与设备管理 → 信任 yumingxie46@gmail.com"
+            echo "  5. 之后运行 ./deploy.sh 即可全自动 deploy"
             echo ""
-            echo "  正在自动打开 Xcode Settings → Accounts..."
-            open -a "/Applications/Xcode-26.2.0.app" 2>/dev/null || true
+            open -a "/Applications/Xcode-26.2.0.app" /Users/yaxinli/xym/Alarm/Alarm.xcodeproj 2>/dev/null || true
         else
             grep "error:" "$BUILD_LOG" 2>/dev/null | head -10 || true
         fi
