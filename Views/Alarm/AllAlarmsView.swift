@@ -126,9 +126,7 @@ struct AllAlarmsView: View {
             } else {
                 Section {
                     ForEach(sortedAlarms) { alarm in
-                        AlarmRowView(alarm: alarm)
-                            .contentShape(Rectangle())
-                            .onTapGesture { editAlarm = alarm }
+                        AlarmRowView(alarm: alarm, onTap: { editAlarm = alarm })
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
                                     store.delete(alarm)

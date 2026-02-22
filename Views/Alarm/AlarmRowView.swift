@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AlarmRowView: View {
     let alarm: Alarm
+    var onTap: (() -> Void)? = nil
     @Environment(AlarmStore.self) private var store
 
     private static let lunarMonthNames = [
@@ -39,21 +40,23 @@ struct AlarmRowView: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 0) {
-            // MARK: Left — time + metadata
-            VStack(alignment: .leading, spacing: 2) {
-                Text(alarm.time, style: .time)
-                    .font(.system(size: 48, weight: .ultraLight, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(alarm.isEnabled ? .primary : .secondary)
-                    .modifier(AlarmWiggleEffect(isEnabled: alarm.isEnabled))
+            // MARK: Left — time + metadata (tap to edit)
+            Button { onTap?() } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(alarm.time, style: .time)
+                        .font(.system(size: 48, weight: .ultraLight, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(alarm.isEnabled ? .primary : .secondary)
+                        .modifier(AlarmWiggleEffect(isEnabled: alarm.isEnabled))
 
-                // Subtitle: title · repeat · holiday
-                subtitleRow
+                    // Subtitle: title · repeat · holiday
+                    subtitleRow
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .buttonStyle(.plain)
 
-            Spacer()
-
-            // MARK: Right — toggle
+            // MARK: Right — toggle (independent, does not trigger edit)
             Toggle(
                 "",
                 isOn: Binding(
@@ -62,9 +65,9 @@ struct AlarmRowView: View {
                 )
             )
             .labelsHidden()
+            .padding(.leading, 8)
         }
         .padding(.vertical, 14)
-        .contentShape(Rectangle())
         .opacity(alarm.isEnabled ? 1 : 0.5)
     }
 
