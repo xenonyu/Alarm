@@ -73,7 +73,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: Alarm.com
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.Alarm
         INFOPLIST_FILE: Info.plist
         DEVELOPMENT_TEAM: HKK65P5735
         CODE_SIGN_STYLE: Automatic
@@ -100,7 +100,7 @@ targets:
       - path: Shared
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: Alarm.com.AlarmWidget
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.Alarm.AlarmWidget
         DEVELOPMENT_TEAM: HKK65P5735
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: AlarmWidget/AlarmWidget.entitlements
@@ -128,7 +128,7 @@ targets:
       - path: UITests
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: Alarm.com.AlarmUITests
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.Alarm.AlarmUITests
         TEST_TARGET_NAME: Alarm
         GENERATE_INFOPLIST_FILE: YES
         FRAMEWORK_SEARCH_PATHS: "$(DEVELOPER_FRAMEWORKS_DIR) $(PLATFORM_DIR)/Developer/Library/Frameworks $(inherited)"

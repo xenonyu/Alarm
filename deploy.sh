@@ -10,7 +10,7 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT="$PROJECT_DIR/Alarm.xcodeproj"
 SCHEME="Alarm"
-BUNDLE_ID="Alarm.com"
+BUNDLE_ID="com.example.Alarm"
 DERIVED_DATA="/tmp/AlarmBuild"
 
 # Point to Xcode 26.2 (non-standard path)
