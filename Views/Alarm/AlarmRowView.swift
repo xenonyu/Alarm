@@ -87,6 +87,10 @@ struct AlarmRowView: View {
                         Text("·").foregroundStyle(.tertiary)
                     }
                     Text(repeatLabel)
+                    if alarm.calendarEventID != nil {
+                        Image(systemName: "calendar")
+                            .foregroundStyle(.blue)
+                    }
                     if showHolidayBadge {
                         Image(systemName: "calendar.badge.minus")
                             .foregroundStyle(.orange)

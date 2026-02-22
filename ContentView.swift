@@ -5,6 +5,7 @@ struct ContentView: View {
     @Environment(AlarmStore.self) private var store
     @Environment(AlarmAudioService.self) private var audio
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Query(sort: \Alarm.createdAt) private var alarms: [Alarm]
 
     @State private var selectedDateComps: DateComponents = {
@@ -58,6 +59,9 @@ struct ContentView: View {
             }
         }
         .onAppear { store.setup(modelContext: modelContext) }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { store.syncCalendarAlarmsIfEnabled() }
+        }
     }
 
     // MARK: - All alarms navigation stack (home tab)
@@ -114,5 +118,8 @@ struct ContentView: View {
                 .navigationBarTitleDisplayMode(.inline)
         }
         .onAppear { store.setup(modelContext: modelContext) }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { store.syncCalendarAlarmsIfEnabled() }
+        }
     }
 }

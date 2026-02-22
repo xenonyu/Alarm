@@ -69,6 +69,19 @@ final class AlarmStore {
 
     // MARK: - Helpers
 
+    /// All alarms currently in the SwiftData store.
+    var allAlarms: [Alarm] {
+        (try? modelContext?.fetch(FetchDescriptor<Alarm>())) ?? []
+    }
+
+    /// Syncs calendar events into alarms if the feature is enabled.
+    @MainActor
+    func syncCalendarAlarmsIfEnabled() {
+        let settings = AppSettings.shared
+        guard settings.calendarSyncEnabled else { return }
+        CalendarService.shared.syncCalendarAlarms(into: self, leadMinutes: settings.calendarLeadMinutes)
+    }
+
     /// Filters `list` to alarms that fire on the given date.
     func alarms(for date: Date, in list: [Alarm]) -> [Alarm] {
         list.filter { $0.fires(on: date, holidays: holidayService.allHolidays) }

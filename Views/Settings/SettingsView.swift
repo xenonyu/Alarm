@@ -14,6 +14,19 @@ struct SettingsView: View {
         @Bindable var settings = settings
 
         List {
+            // ── Calendar Integration ──────────────────────────────────────────────
+            Section {
+                NavigationLink {
+                    CalendarIntegrationSettingsView()
+                } label: {
+                    Label("Calendar Events", systemImage: "calendar.badge.plus")
+                }
+            } header: {
+                Label("Calendar", systemImage: "calendar")
+            } footer: {
+                Text("Auto-create alarms before upcoming calendar events.")
+            }
+
             // ── Public Holidays ──────────────────────────────────────────────────
             Section {
                 NavigationLink {

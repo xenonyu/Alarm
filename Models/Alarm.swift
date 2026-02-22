@@ -35,6 +35,10 @@ final class Alarm {
     /// Last successfully fetched travel time in seconds (cached for notification scheduling)
     var commuteTravelSeconds: Double = 0
 
+    // MARK: - Calendar Integration
+    /// If set, this alarm was auto-created from the calendar event with this EKEvent identifier.
+    var calendarEventID: String? = nil
+
     init(
         title: String,
         time: Date,

@@ -55,6 +55,7 @@ targets:
         NSSupportsLiveActivitiesFrequentUpdates: true
         NSAlarmKitUsageDescription: "Alarm uses AlarmKit to ring alarms reliably even when the app is not running."
         NSLocationWhenInUseUsageDescription: "Alarm uses your location to calculate real-time commute duration and remind you to leave on time."
+        NSCalendarsFullAccessUsageDescription: "Alarm reads your calendar to auto-create alarms before events."
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
           UISceneConfigurations: {}
@@ -85,6 +86,7 @@ targets:
       - sdk: AlarmKit.framework
       - sdk: AppIntents.framework
       - sdk: ActivityKit.framework
+      - sdk: EventKit.framework
       - sdk: WidgetKit.framework
       - target: AlarmWidget
         embed: true

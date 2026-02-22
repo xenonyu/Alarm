@@ -21,6 +21,18 @@ final class AppSettings {
         didSet { defaults.set(ringtone, forKey: "ringtone") }
     }
 
+    // MARK: - Calendar Integration
+
+    /// When true, automatically create alarms before calendar events.
+    var calendarSyncEnabled: Bool {
+        didSet { defaults.set(calendarSyncEnabled, forKey: "calendarSyncEnabled") }
+    }
+
+    /// Minutes before a calendar event to set the auto-created alarm.
+    var calendarLeadMinutes: Int {
+        didSet { defaults.set(calendarLeadMinutes, forKey: "calendarLeadMinutes") }
+    }
+
     // MARK: - Peak Hours
 
     /// When true, adds extra buffer to commute alarms during Mon–Fri peak hours (7–9am, 5–7pm).
@@ -46,6 +58,9 @@ final class AppSettings {
         }
 
         self.ringtone = defaults.string(forKey: "ringtone") ?? "alarm_classic"
+        self.calendarSyncEnabled = defaults.bool(forKey: "calendarSyncEnabled")
+        let savedLead = defaults.integer(forKey: "calendarLeadMinutes")
+        self.calendarLeadMinutes = savedLead > 0 ? savedLead : 30
         self.peakHoursAutoAdjust = defaults.bool(forKey: "peakHoursAutoAdjust")
         let savedPeak = defaults.integer(forKey: "peakHoursExtraMinutes")
         self.peakHoursExtraMinutes = savedPeak > 0 ? savedPeak : 15
