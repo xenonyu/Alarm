@@ -75,7 +75,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.Alarm
         INFOPLIST_FILE: Info.plist
-        DEVELOPMENT_TEAM: HKK65P5735
+        DEVELOPMENT_TEAM: 3QR5892W4W
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: Alarm/Alarm.entitlements
     dependencies:
@@ -101,7 +101,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.Alarm.AlarmWidget
-        DEVELOPMENT_TEAM: HKK65P5735
+        DEVELOPMENT_TEAM: 3QR5892W4W
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: AlarmWidget/AlarmWidget.entitlements
     dependencies:

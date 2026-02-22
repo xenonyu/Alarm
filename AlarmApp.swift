@@ -8,10 +8,9 @@ struct AlarmApp: App {
     private let settings = AppSettings.shared
 
     private static let modelContainer: ModelContainer = {
-        let config = ModelConfiguration(
-            cloudKitDatabase: .private("iCloud.com.example.Alarm")
-        )
-        return try! ModelContainer(for: Alarm.self, configurations: config)
+        // CloudKit sync requires a paid Apple Developer account + iCloud entitlement.
+        // Using local-only store for personal team builds.
+        return try! ModelContainer(for: Alarm.self)
     }()
 
     init() {

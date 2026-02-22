@@ -116,34 +116,46 @@ else
     #      (created by a prior Xcode GUI build), use it with Manual signing.
     #   2. Otherwise, fall back to -allowProvisioningUpdates and show guidance.
 
-    PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
     PROFILE_UUID=""
+    PROFILE_APP_WIDGET_UUID=""
 
-    # Find the Xcode-managed profile for our bundle ID
-    for pf in "$PROFILES_DIR"/*.mobileprovision; do
-        [[ -f "$pf" ]] || continue
-        content=$(security cms -D -i "$pf" 2>/dev/null) || continue
-        if echo "$content" | grep -q "com.example.Alarm"; then
-            if echo "$content" | grep -q "HKK65P5735"; then
-                PROFILE_UUID=$(echo "$content" | plutil -extract UUID raw - 2>/dev/null || true)
-                [[ -n "$PROFILE_UUID" ]] && break
-            fi
-        fi
-    done
+    # Xcode 26 stores Xcode-managed profiles in UserData, not MobileDevice
+    _search_profile() {
+        local bundle="$1" team="$2" result=""
+        for dir in \
+            "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" \
+            "$HOME/Library/MobileDevice/Provisioning Profiles"; do
+            [[ -d "$dir" ]] || continue
+            for pf in "$dir"/*.mobileprovision; do
+                [[ -f "$pf" ]] || continue
+                content=$(security cms -D -i "$pf" 2>/dev/null) || continue
+                if echo "$content" | grep -q "$bundle"; then
+                    if echo "$content" | grep -q "$team"; then
+                        result=$(echo "$content" | plutil -extract UUID raw - 2>/dev/null || true)
+                        [[ -n "$result" ]] && echo "$result" && return
+                    fi
+                fi
+            done
+        done
+    }
+
+    PROFILE_UUID=$(_search_profile "com.example.Alarm" "3QR5892W4W")
+    PROFILE_APP_WIDGET_UUID=$(_search_profile "com.example.Alarm.AlarmWidget" "3QR5892W4W")
 
     BUILD_LOG=$(mktemp /tmp/alarm-build-XXXXXX.log)
     set +e
 
     if [[ -n "$PROFILE_UUID" ]]; then
-        echo "  (Using cached profile: $PROFILE_UUID)"
+        echo "  (Using cached profiles: $PROFILE_UUID)"
         "$XCODEBUILD" build \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
             -destination "id=$XCODE_DEVICE_ID" \
             -derivedDataPath "$DERIVED_DATA" \
-            DEVELOPMENT_TEAM=HKK65P5735 \
+            DEVELOPMENT_TEAM=3QR5892W4W \
             CODE_SIGN_STYLE=Manual \
-            PROVISIONING_PROFILE="$PROFILE_UUID" \
+            "PROVISIONING_PROFILE[sdk=iphoneos*]=$PROFILE_UUID" \
+            "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]=com.example.Alarm" \
             -quiet 2>&1 | tee "$BUILD_LOG"
     else
         "$XCODEBUILD" build \
@@ -153,7 +165,7 @@ else
             -derivedDataPath "$DERIVED_DATA" \
             -allowProvisioningUpdates \
             -allowProvisioningDeviceRegistration \
-            DEVELOPMENT_TEAM=HKK65P5735 \
+            DEVELOPMENT_TEAM=3QR5892W4W \
             CODE_SIGN_STYLE=Automatic \
             -quiet 2>&1 | tee "$BUILD_LOG"
     fi
@@ -164,13 +176,13 @@ else
     if [[ $BUILD_EXIT -ne 0 ]]; then
         if grep -q "No Accounts\|No profiles" "$BUILD_LOG" 2>/dev/null; then
             echo ""
-            echo "✗ 需要先从 Xcode GUI 构建一次（只需一次，之后全自动）："
+            echo "✗ 需要先在 Xcode 构建一次，为 com.example.Alarm 创建 profile（只需一次）："
             echo ""
-            echo "  1. Xcode 已打开，选择顶部设备栏中的 'Yuming's iPhone'"
-            echo "  2. 打开 Signing & Capabilities，Team 选 'Personal Team'"
-            echo "  3. 按 ⌘R（Run）安装到手机"
-            echo "  4. 手机上：设置 → 通用 → VPN与设备管理 → 信任 yumingxie46@gmail.com"
-            echo "  5. 之后运行 ./deploy.sh 即可全自动 deploy"
+            echo "  1. 打开的 Xcode 里，顶部设备选 'Yuming's iPhone'"
+            echo "  2. Signing & Capabilities → Team 应已自动选 Personal Team (3QR5892W4W)"
+            echo "     如果不是，手动切换到 yumingxie46@gmail.com Personal Team"
+            echo "  3. 按 ⌘B（Build）—— 不需要 Run，只需 Build"
+            echo "  4. Build 成功后，重新运行 ./deploy.sh，之后永久全自动"
             echo ""
             open -a "/Applications/Xcode-26.2.0.app" /Users/yaxinli/xym/Alarm/Alarm.xcodeproj 2>/dev/null || true
         else
