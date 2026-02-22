@@ -1,9 +1,6 @@
 import Foundation
 import Observation
 
-/// Shared App Group identifier used by the main app, Widget, and Watch extensions.
-let appGroupID = "group.com.yumingxie.Alarm"
-
 @Observable
 final class AppSettings {
     static let shared = AppSettings()

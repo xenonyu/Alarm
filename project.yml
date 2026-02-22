@@ -28,6 +28,8 @@ targets:
           - "*.xcworkspace/**"
           - memory/**
           - UITests/**
+          - AlarmWidget/**
+      - path: Shared
     resources:
       - path: Assets.xcassets
       - path: Localizable.xcstrings
@@ -83,6 +85,38 @@ targets:
       - sdk: AlarmKit.framework
       - sdk: AppIntents.framework
       - sdk: ActivityKit.framework
+      - sdk: WidgetKit.framework
+      - target: AlarmWidget
+        embed: true
+
+  AlarmWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: AlarmWidget
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yumingxie.Alarm.AlarmWidget
+        DEVELOPMENT_TEAM: MS49M8LMJ8
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: AlarmWidget/AlarmWidget.entitlements
+    dependencies:
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    info:
+      path: AlarmWidget/Info.plist
+      properties:
+        CFBundleDisplayName: "Alarm Widget"
+        CFBundleExecutable: "$(EXECUTABLE_NAME)"
+        CFBundleIdentifier: "$(PRODUCT_BUNDLE_IDENTIFIER)"
+        CFBundleName: "$(PRODUCT_NAME)"
+        CFBundlePackageType: XPC!
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
 
   AlarmUITests:
     type: bundle.ui-testing
@@ -104,6 +138,7 @@ schemes:
     build:
       targets:
         Alarm: all
+        AlarmWidget: all
     run:
       config: Debug
     test:

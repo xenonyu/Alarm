@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import Observation
+import WidgetKit
 
 /// Central coordinator: owns HolidayService, bridges SwiftData CRUD with notification scheduling.
 @Observable
@@ -81,6 +82,28 @@ final class AlarmStore {
 
     private func save() {
         try? modelContext?.save()
+        writeWidgetSnapshot()
+    }
+
+    private func writeWidgetSnapshot() {
+        guard let ctx = modelContext else { return }
+        let allAlarms = (try? ctx.fetch(FetchDescriptor<Alarm>())) ?? []
+        let holidays = holidayService.allHolidays
+        let now = Date()
+        let next = allAlarms
+            .filter(\.isEnabled)
+            .compactMap { alarm -> (Date, Alarm)? in
+                guard let d = alarm.nextFireDates(from: now, count: 1, holidays: holidays).first else { return nil }
+                return (d, alarm)
+            }
+            .min(by: { $0.0 < $1.0 })
+        let snapshot = AlarmWidgetSnapshot(
+            nextAlarmTime: next?.0,
+            nextAlarmTitle: next?.1.title ?? "",
+            nextAlarmRepeatLabel: ""
+        )
+        snapshot.save()
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     private func reschedule(_ alarm: Alarm) {
