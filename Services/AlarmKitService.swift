@@ -3,6 +3,14 @@ import AppIntents
 import Foundation
 import SwiftUI
 
+/// Returns true when AlarmKit is authorized. Safe to call on any iOS version.
+func alarmKitIsAuthorized() -> Bool {
+    if #available(iOS 26, *) {
+        return AlarmManager.shared.authorizationState == .authorized
+    }
+    return false
+}
+
 /// Wraps AlarmKit.AlarmManager for iOS 26+ alarm scheduling.
 /// On iOS <26 this class is never instantiated; UNNotification + AlarmAudioService is used instead.
 @available(iOS 26.0, *)

@@ -4,8 +4,10 @@ struct AllAlarmsView: View {
     let alarms: [Alarm]
 
     @Environment(AlarmStore.self) private var store
+    @Environment(\.scenePhase) private var scenePhase
     @State private var showAdd = false
     @State private var editAlarm: Alarm? = nil
+    @State private var alarmKitAuthorized = alarmKitIsAuthorized()
 
     /// Sort enabled alarms first, then by time-of-day.
     private var sortedAlarms: [Alarm] {
@@ -32,26 +34,37 @@ struct AllAlarmsView: View {
     var body: some View {
         List {
             // ── AlarmKit authorization warning ───────────────────────────────────
-            if #available(iOS 26, *), !AlarmKitService.isAuthorized {
+            if #available(iOS 26, *), !alarmKitAuthorized {
                 Section {
-                    HStack(spacing: 12) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.title3)
-                            .foregroundStyle(.orange)
-                        VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.title3)
+                                .foregroundStyle(.orange)
                             Text("Alarm Permission Required")
                                 .font(.subheadline.weight(.semibold))
-                            Text("Enable Alarms in Settings so alarms can ring.")
+                            Spacer()
+                            Link(destination: URL(string: UIApplication.openSettingsURLString)!) {
+                                Text("Open Settings")
+                                    .font(.caption.weight(.semibold))
+                            }
+                        }
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("To allow alarms to ring:")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("1. Tap **Open Settings** above")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("2. Scroll down and tap **Alarm**")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("3. Enable the **Alarms** toggle")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
-                        Spacer()
-                        Link(destination: URL(string: UIApplication.openSettingsURLString)!) {
-                            Text("Settings")
-                                .font(.caption.weight(.semibold))
-                        }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 6)
                 }
                 .listRowBackground(Color.orange.opacity(0.10))
                 .listRowSeparator(.hidden)
@@ -153,6 +166,9 @@ struct AllAlarmsView: View {
         }
         .sheet(item: $editAlarm) { alarm in
             AddAlarmView(existingAlarm: alarm)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { alarmKitAuthorized = alarmKitIsAuthorized() }
         }
     }
 }

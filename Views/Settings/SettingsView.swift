@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(AppSettings.self) private var settings
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var alarmKitAuthorized = alarmKitIsAuthorized()
 
     private var currentCountryName: String {
         Locale.current.localizedString(forRegionCode: settings.holidayCountryCode)
@@ -89,7 +91,7 @@ struct SettingsView: View {
                     Link(destination: URL(string: UIApplication.openSettingsURLString)!) {
                         HStack {
                             Label("Alarms", systemImage: "alarm")
-                            if !AlarmKitService.isAuthorized {
+                            if !alarmKitAuthorized {
                                 Spacer()
                                 Text("Not Allowed")
                                     .font(.caption)
@@ -126,6 +128,9 @@ struct SettingsView: View {
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { alarmKitAuthorized = alarmKitIsAuthorized() }
+        }
     }
 }
 
