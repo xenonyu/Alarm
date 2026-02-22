@@ -51,6 +51,7 @@ targets:
           - audio
         NSSupportsLiveActivities: true
         NSSupportsLiveActivitiesFrequentUpdates: true
+        NSAlarmKitUsageDescription: "Alarm uses AlarmKit to ring alarms reliably even when the app is not running."
         NSLocationWhenInUseUsageDescription: "Alarm uses your location to calculate real-time commute duration and remind you to leave on time."
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
